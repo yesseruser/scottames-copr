@@ -85,14 +85,16 @@ zig build \
 %{_prefix}/share/nvim/site/ftdetect/ghostty.vim
 %{_prefix}/share/nvim/site/ftplugin/ghostty.vim
 %{_prefix}/share/nvim/site/syntax/ghostty.vim
-%{_prefix}/share/terminfo/g/ghostty
-%{_prefix}/share/terminfo/x/xterm-ghostty
 %{_prefix}/share/vim/vimfiles/compiler/ghostty.vim
 %{_prefix}/share/vim/vimfiles/ftdetect/ghostty.vim
 %{_prefix}/share/vim/vimfiles/ftplugin/ghostty.vim
 %{_prefix}/share/vim/vimfiles/syntax/ghostty.vim
 %{_prefix}/share/zsh/site-functions/_ghostty
 
+%{_prefix}/share/terminfo/x/xterm-ghostty
+%if ! (0%{?fedora} == 42)
+    %{_prefix}/share/terminfo/g/ghostty
+%endif
 
 %changelog
 %autochangelog
