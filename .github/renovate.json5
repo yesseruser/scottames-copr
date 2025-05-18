@@ -3,10 +3,12 @@
   extends: [
     'github>scottames/renovate:default.json5',
   ],
+  schedule: ['* 22 * * *'], // Run every day at 2pm PST (10pm UTC)
+  automerge: true,
   customManagers: [
     {
       customType: 'regex',
-      managerFilePatterns: [
+      fileMatch: [
         '/ghostty/.*\\.spec$/',
       ],
       matchStrings: [
@@ -17,7 +19,95 @@
     },
     {
       customType: 'regex',
-      managerFilePatterns: [
+      fileMatch: [
+        '/hypr/hypridle\\.spec$/',
+      ],
+      matchStrings: [
+        'Version:\\s*(?<currentValue>\\S+)',
+      ],
+      depNameTemplate: 'hyprwm/hypridle',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      customType: 'regex',
+      fileMatch: [
+        '/hypr/hyprgraphics\\.spec$/',
+      ],
+      matchStrings: [
+        'Version:\\s*(?<currentValue>\\S+)',
+      ],
+      depNameTemplate: 'hyprwm/hyprgraphics',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      customType: 'regex',
+      fileMatch: [
+        '/hypr/hyprlang\\.spec$/',
+      ],
+      matchStrings: [
+        'Version:\\s*(?<currentValue>\\S+)',
+      ],
+      depNameTemplate: 'hyprwm/hyprlang',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      customType: 'regex',
+      fileMatch: [
+        '/hypr/hyprland-protocols\\.spec$/',
+      ],
+      matchStrings: [
+        'Version:\\s*(?<currentValue>\\S+)',
+      ],
+      depNameTemplate: 'hyprwm/hyprland-protocols',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      customType: 'regex',
+      fileMatch: [
+        '/hypr/hyprlock\\.spec$/',
+      ],
+      matchStrings: [
+        'Version:\\s*(?<currentValue>\\S+)',
+      ],
+      depNameTemplate: 'hyprwm/hyprlock',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      customType: 'regex',
+      fileMatch: [
+        '/hypr/hyprpaper\\.spec$/',
+      ],
+      matchStrings: [
+        'Version:\\s*(?<currentValue>\\S+)',
+      ],
+      depNameTemplate: 'hyprwm/hyprpaper',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      customType: 'regex',
+      fileMatch: [
+        '/hypr/hyprpicker\\.spec$/',
+      ],
+      matchStrings: [
+        'Version:\\s*(?<currentValue>\\S+)',
+      ],
+      depNameTemplate: 'hyprwm/hyprpicker',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      customType: 'regex',
+      fileMatch: [
+        '/hypr/hyprutils\\.spec$/',
+      ],
+      matchStrings: [
+        'Version:\\s*(?<currentValue>\\S+)',
+      ],
+      depNameTemplate: 'hyprwm/hyprutils',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      customType: 'regex',
+      fileMatch: [
         '/zen-browser/.*\\.spec$/',
       ],
       matchStrings: [
