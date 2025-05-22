@@ -1,7 +1,7 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["github>scottames/renovate:default.json5"],
-  schedule: ["* 22 * * *"], // Run every day at 2pm PST (10pm UTC)
+  schedule: ["* * * * *"], // explicitly unrestricted
   automerge: true,
   customManagers: [
     {
