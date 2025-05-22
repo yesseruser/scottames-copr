@@ -6,8 +6,17 @@ on:
     branches: [main]
     paths:
       - "*/*.spec"
+  workflow_dispatch:
+    inputs:
+      # checkov:skip=CKV_GHA_7:arg passed to env
+      spec_file:
+        description: "Spec file to monitor (format: project/package.spec)"
+        required: false
+        type: string
 permissions:
   contents: read # required for actions/checkout
+env:
+  COPR_OWNER: scottames
 jobs:
   matrix_from_changed_specs:
     runs-on: ubuntu-latest
@@ -25,17 +34,30 @@ jobs:
         id: matrix_from_changed_spec_files
         # yamllint disable rule:line-length
         run: |
+          set -euo pipefail
           MATRIX_JSON=""
           # used to ensure unique "project:package" strings, newline-separated
           SEEN_COMBINATIONS=""
 
-          for spec_file in ${{ steps.changed_specs.outputs.all_changed_files }}; do
+          # Check if manual spec file was provided via workflow_dispatch
+          MANUAL_SPEC_FILE="${{ github.event.inputs.spec_file }}"
+
+          if [ -n "${MANUAL_SPEC_FILE}" ]; then
+            echo "::notice::Using manually specified spec file: ${MANUAL_SPEC_FILE}"
+            # Use the manually specified spec file instead of changed files
+            SPEC_FILES="${MANUAL_SPEC_FILE}"
+          else
+            # Use the detected changed files
+            SPEC_FILES="${{ steps.changed_specs.outputs.all_changed_files }}"
+          fi
+
+          for COPR_SPEC_FILE in ${SPEC_FILES}; do
             # Skip if spec_file is empty (e.g. if there were extra spaces in the input)
-            if [ -z "$spec_file" ]; then
+            if [ -z "$COPR_SPEC_FILE" ]; then
               continue
             fi
 
-            COPR_PROJECT="$(dirname "$spec_file")"
+            COPR_PROJECT="$(dirname "$COPR_SPEC_FILE")"
             # Remove potential ./ prefix if present
             #   (e.g. if find results included it)
             COPR_PROJECT="${COPR_PROJECT#./}"
@@ -43,10 +65,10 @@ jobs:
             # Extract package name from the 'Name:' field in the spec file
             # Using grep -Po for Perl-compatible regex to get only the matched
             # group. Assumes 'Name:' is at the beginning of a line.
-            COPR_PACKAGE_NAME="$(grep -Po '^Name:\s*\K[^[:space:]]+' "$spec_file")"
+            COPR_PACKAGE_NAME="$(grep -Po '^Name:\s*\K[^[:space:]]+' "$COPR_SPEC_FILE")"
 
             if [ -z "${COPR_PACKAGE_NAME}" ]; then
-              echo "::warning file=$spec_file::Could not extract package name from $spec_file"
+              echo "::warning file=$COPR_SPEC_FILE::Could not extract package name from $COPR_SPEC_FILE"
               continue # Skip this file if package name couldn't be extracted
             fi
 
@@ -74,14 +96,16 @@ jobs:
           # If MATRIX_JSON is empty, output an empty include list
           # otherwise, output the list of JSON objects
           if [ -z "${MATRIX_JSON}" ]; then
+            # shellcheck disable=SC2086
             echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
           else
+            # shellcheck disable=SC2086
             echo "matrix={\"include\":[$MATRIX_JSON]}" >> $GITHUB_OUTPUT
           fi
         # yamllint enable rule:line-length
   monitor-builds:
     needs: matrix_from_changed_specs
-    if: needs.matrix_from_changed_specs.outputs.matrix != '{"include":[]}'
+    if: needs.matrix_from_changed_specs.outputs.matrix != '{"include":[]}' || github.event.inputs.spec_file != ''
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.matrix_from_changed_specs.outputs.matrix) }}
@@ -89,22 +113,28 @@ jobs:
     steps:
       - name: Install copr-cli
         run: |
+          set -euo pipefail
+          echo "::group::Installing system dependencies"
+          sudo apt-get update
+          sudo apt-get install -y python3-dev libkrb5-dev
+          echo "::endgroup::"
+
           echo "::group::Installing COPR CLI dependencies"
-          python3 -m pip install copr-cli
+          python3 -m pip install copr-cli requests_gssapi
           echo "::endgroup::"
       - name: Monitor COPR build status
         env:
           COPR_API_TOKEN: ${{ secrets.COPR_API_TOKEN }}
         # yamllint disable rule:line-length
         run: |
-          set -x
+          set -euo pipefail
           echo "::notice file=${{ matrix.project }}/${{ matrix.package }}.spec::Monitoring builds for ${{ matrix.project }}/${{ matrix.package }}"
 
-          LATEST_BUILD_ID="$(copr-cli get-package ${{ matrix.project }} --name ${{ matrix.package }} | jq -r '.latest_build_id')"
+          LATEST_BUILD_ID="$(copr-cli get-package "${COPR_OWNER}/${{ matrix.project }}" --name ${{ matrix.package }} --with-latest-build | jq -r '.latest_build.id')"
           echo "::debug::Build ID: ${LATEST_BUILD_ID}"
 
           for i in {1..30}; do
-            STATUS="$(copr-cli get-build-status "${LATEST_BUILD_ID}" | jq -r '.status')"
+            STATUS="$(copr-cli status "${LATEST_BUILD_ID}")"
             case "${STATUS}" in
               "succeeded")
                 echo "::notice file=${{ matrix.project }}/${{ matrix.package }}.spec,title=Build Success::Package ${{ matrix.package }} built successfully!"
