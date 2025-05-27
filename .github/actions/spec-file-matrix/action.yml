@@ -67,7 +67,7 @@ runs:
         echo "::endgroup::"
 
         if [ -z "${MATRIX_JSON}" ]; then
-          echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+          echo "matrix=[]" >> $GITHUB_OUTPUT
         else
-          echo "matrix={\"include\":[$MATRIX_JSON]}" >> $GITHUB_OUTPUT
+          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
         fi
