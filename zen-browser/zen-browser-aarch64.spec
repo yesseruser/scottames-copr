@@ -24,6 +24,8 @@ Requires(post):     gtk-update-icon-cache
 Conflicts:          zen-browser-avx2
 Conflicts:          zen-browser
 
+BuildRequires:      patchelf
+
 %description
 Zen Browser <https://zen-browser.app> packaged for Fedora Linux.
 
@@ -42,6 +44,8 @@ Bugs related to this package should be reported at this Git project:
 %__install -d %{buildroot}{/opt/%{application_name},%{_bindir},%{_datadir}/applications,%{_datadir}/icons/hicolor/128x128/apps,%{_datadir}/icons/hicolor/64x64/apps,%{_datadir}/icons/hicolor/48x48/apps,%{_datadir}/icons/hicolor/32x32/apps,%{_datadir}/icons/hicolor/16x16/apps}
 
 %__cp -r * %{buildroot}/opt/%{application_name}
+
+patchelf --remove-rpath %{buildroot}/opt/%{application_name}/libonnxruntime.so
 
 %__install -D -m 0644 %{SOURCE1} -t %{buildroot}%{_datadir}/applications
 

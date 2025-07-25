@@ -23,6 +23,8 @@ Recommends:         (gnome-browser-connector if gnome-shell)
 Requires(post):     gtk-update-icon-cache
 Conflicts:          zen-browser-avx2, zen-browser-aarch64
 
+BuildRequires:      patchelf
+
 Provides: zen-browser-avx2 = %{version}-%{release}
 Obsoletes: zen-browser-avx2 < 1.0.2.b.3-3
 
@@ -38,6 +40,8 @@ Zen Browser <https://zen-browser.app> packaged for Fedora Linux.
 %__install -d %{buildroot}{/opt/%{application_name},%{_bindir},%{_datadir}/applications,%{_datadir}/icons/hicolor/128x128/apps,%{_datadir}/icons/hicolor/64x64/apps,%{_datadir}/icons/hicolor/48x48/apps,%{_datadir}/icons/hicolor/32x32/apps,%{_datadir}/icons/hicolor/16x16/apps}
 
 %__cp -r * %{buildroot}/opt/%{application_name}
+
+patchelf --remove-rpath %{buildroot}/opt/%{application_name}/libonnxruntime.so
 
 %__install -D -m 0644 %{SOURCE1} -t %{buildroot}%{_datadir}/applications
 
