@@ -1,0 +1,52 @@
+---
+name: build changed spec files
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "*/*.spec"
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has-changes: ${{ steps.changed-files.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: changed spec files
+        id: changed-files
+        # https://www.stepsecurity.io/blog/harden-runner-detection-tj-actions-changed-files-action-is-compromised
+        # yamllint disable-line rule:line-length
+        uses: step-security/changed-files@95b56dadb92a30ca9036f16423fd3c088a71ee94 # v46
+        with:
+          files: |
+            **/*.spec
+          json: true
+          escape_json: false
+      - name: Set matrix output
+        id: set-matrix
+        # yamllint disable rule:line-length
+        run: |
+          echo "matrix={\"spec-file\":${{ steps.changed-files.outputs.all_changed_files }}}" >> "$GITHUB_OUTPUT"
+        # yamllint enable rule:line-length
+  test-specs:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test ${{ matrix.spec-file }}
+        # yamllint disable-line rule:line-length
+        uses: dagger/dagger-for-github@b81317a976cb7f7125469707321849737cd1b3bc # v7
+        with:
+          version: "latest"
+          verb: call
+          args: build-spec-file --spec-file "${{ matrix.spec-file }}"
