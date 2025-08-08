@@ -2,7 +2,6 @@
 name: build changed spec files
 on:
   pull_request:
-    branches: [main]
     paths:
       - "*/*.spec"
 permissions:
