@@ -25,13 +25,13 @@ jobs:
         with:
           files: |
             **/*.spec
-          json: true
-          escape_json: false
       - name: Set matrix output
         id: set-matrix
         # yamllint disable rule:line-length
         run: |
-          echo "matrix={\"spec-file\":${{ steps.changed-files.outputs.all_changed_files }}}" >> "$GITHUB_OUTPUT"
+          files="${{ steps.changed-files.outputs.all_changed_files }}"
+          json_array="[$(echo "$files" | sed 's/[^ ]*/\"&\"/g' | sed 's/ /,/g')]"
+          echo "matrix={\"spec-file\":$json_array}" >> "$GITHUB_OUTPUT"
         # yamllint enable rule:line-length
   test-specs:
     needs: detect-changes
